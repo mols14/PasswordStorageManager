@@ -12,7 +12,6 @@ public class UserModel
         return Password.Length > 8 &&
                Password.Any(char.IsUpper) &&
                Password.Any(char.IsLower) &&
-               Password.Any(char.IsDigit) &&
-               Password.Any(ch => "!@#$%^&*()".Contains(ch));
+               Password.Any(char.IsDigit);
     }
 }

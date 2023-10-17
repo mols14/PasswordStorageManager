@@ -26,7 +26,7 @@ public class UserRepository : IUserRepository
         var settings = MongoClientSettings.FromConnectionString(_config.GetConnectionString("MongoDB"));
 
         var client = new MongoClient(settings);
-        var db = client.GetDatabase("PasswordManager");
+        var db = client.GetDatabase("PasswordStorageManager");
 
         _users = db.GetCollection<User>("Users");
     }

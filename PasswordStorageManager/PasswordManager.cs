@@ -82,12 +82,12 @@ public class PasswordManager
             {
                 var user = _authService.PasswordHasher(username!, mPassword!);
                 _userService.CreateUser(user);
-                Thread.Sleep(3000);
+                Thread.Sleep(6000);
                 Login();
             }
             else
             {
-                Console.WriteLine("You password does not meet the requirements, try again");
+                Console.WriteLine("Password must be at least be 8 characters and contain a capitalized letter, and a number");
                 Thread.Sleep(2000);
                 CreateNewUser();
             }

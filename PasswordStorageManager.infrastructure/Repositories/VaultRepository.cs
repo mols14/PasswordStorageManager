@@ -16,7 +16,7 @@ public class VaultRepository : IVaultRepository
     public VaultRepository()
     {
         var basePath = AppDomain.CurrentDomain.BaseDirectory;
-        var configPath = Path.Combine(basePath, "../../../../PasswordStorageManager.Infrastructure/appsettings.json");
+        var configPath = Path.Combine(basePath, "../../../../PasswordStorageManager.infrastructure/appsettings.json");
 
         _config = new ConfigurationBuilder().
             AddJsonFile(configPath)
@@ -27,7 +27,7 @@ public class VaultRepository : IVaultRepository
        
         var settings = MongoClientSettings.FromConnectionString(_config.GetConnectionString("MongoDB"));
         var client = new MongoClient(settings);
-        var db = client.GetDatabase("PasswordManager");
+        var db = client.GetDatabase("PasswordStorageManager");
 
         _vaultItems = db.GetCollection<VaultItem>("VaultItems");
     }
