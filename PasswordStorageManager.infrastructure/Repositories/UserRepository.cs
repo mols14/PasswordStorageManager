@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Configuration;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using PasswordStorageManager.Core.Interfaces.Repositories;
 using PasswordStorageManager.Core.Models;
@@ -12,6 +13,7 @@ public class UserRepository : IUserRepository
     private readonly IMongoCollection<User> _users;
     private readonly UserConverter _converter;
     private readonly IConfigurationRoot _config;
+    private readonly IMongoCollection<SecureUserKeys> _userKeys;
 
     public UserRepository()
     {
@@ -26,9 +28,11 @@ public class UserRepository : IUserRepository
         var settings = MongoClientSettings.FromConnectionString(_config.GetConnectionString("MongoDB"));
 
         var client = new MongoClient(settings);
-        var db = client.GetDatabase("PasswordStorageManager");
+        var passwordDb = client.GetDatabase("PasswordStorageManager");
+        var encryptionParamsDb = client.GetDatabase("EncryptionParameters");
 
-        _users = db.GetCollection<User>("Users");
+        _users = passwordDb.GetCollection<User>("Users");
+        _userKeys = encryptionParamsDb.GetCollection<SecureUserKeys>("SecureUserKeys");
     }
     
     public IEnumerable<UserModel> GetAllUsers()
@@ -36,7 +40,9 @@ public class UserRepository : IUserRepository
         try
         {
             var users = _users.Find(_ => true).ToList();
-            return users.Select(user => _converter.Convert(user));
+            var secureKeys = _userKeys.Find(_ => true).ToList();
+
+            return _converter.Convert(users, secureKeys);
         }
         catch (Exception e)
         {
@@ -44,30 +50,22 @@ public class UserRepository : IUserRepository
             throw;
         }
     }
-
-    public UserModel GetUser(string email)
-    {
-        try
-        {
-            var filter = Builders<User>.Filter.Eq(u => u.Username, email);
-            var user = _users.FindAsync(filter).Result.FirstOrDefault();
-            return _converter.Convert(user);
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine("Please provide a valid email address and password.");
-            throw;
-        }
-    }
-
+    
     public void CreateUser(UserModel user)
     {
         try
         {
-            _users.InsertOne(new User
+            var insertOne = new User
             {
                 Username = user.Username,
-                PasswordHash = user.PasswordHash,
+                EncryptedRandom = user.EncryptedRandom,
+                Id = ObjectId.GenerateNewId()
+            };
+            _users.InsertOne(insertOne);
+            _userKeys.InsertOne(new SecureUserKeys
+            {
+                UserId = insertOne.Id.ToString()!,
+                IV = user.IV,
                 PasswordSalt = user.PasswordSalt
             });
         }

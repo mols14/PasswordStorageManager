@@ -145,13 +145,12 @@ public class PasswordManager
         var items = _vaultService.GetItemsByUserId(_usermodel.Id).ToList();
         foreach (var item in items)
         {
-            var salt = Encoding.ASCII.GetString(_usermodel.PasswordSalt);
-            var key = salt.Substring(0, 32);
             Console.WriteLine($"{item.ItemName}");
             Console.WriteLine($" Username : {item.Username} ");
-            Console.WriteLine($" Password : {_authService.GetDecryptedPassword(key, item.EncryptedPassword)}");
+            Console.WriteLine($" Password : {_authService.GetDecryptedPassword(item)}");
         }
-        Console.WriteLine("1 to go back to the main menu or write 2 to exit the app.");
+        Console.WriteLine("1 to go back to the main menu"+"\n write 2 to exit the app.");
+        
         var choice = Console.ReadLine();
         switch (choice)
         {
@@ -186,20 +185,14 @@ public class PasswordManager
                 break;
             }
         }
-
-        var salt = Encoding.ASCII.GetString(_usermodel.PasswordSalt);
-        var key = salt.Substring(0, 32);
-        var encryptedPassword = _authService.EncryptItemPassword(key, password);
         
         var newItem = new ItemModel
         {
             ItemName = itemName!,
             Username = username!,
-            EncryptedPassword = encryptedPassword,
             UserId = _usermodel.Id
         };
-
-        _vaultService.SaveItem(newItem);
+        _authService.EncryptItemPassword(newItem, password);
         
         Console.WriteLine("Your item has been safely stored");
         Thread.Sleep(2000);

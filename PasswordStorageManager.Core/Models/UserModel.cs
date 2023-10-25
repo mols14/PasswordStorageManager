@@ -5,8 +5,13 @@ public class UserModel
     public string Id { get; set; }
     public string Username { get; set; }
     public string Password { get; set; }
-    public byte[] PasswordHash { get; set; }
+    public byte[] EncryptedRandom { get; set; }
+    
+    public byte[] IV { get; set; }
     public byte[] PasswordSalt { get; set; }
+    
+    
+    
     public bool isPasswordValid()
     {
         return Password.Length > 8 &&
