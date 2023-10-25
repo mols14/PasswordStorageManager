@@ -9,6 +9,11 @@ public class AuthService : IAuthService
 {
     private byte[] key;
     private readonly IVaultService _vaultService;
+
+    public AuthService(IVaultService vaultService)
+    {
+        _vaultService = vaultService;
+    }
     public UserModel PasswordHasher(string username, string password)
     {
         GenerateUserCredentials(password, out var iv, out var passwordSalt, out var random);
@@ -25,26 +30,31 @@ public class AuthService : IAuthService
 
     public void EncryptItemPassword(ItemModel newItem, string plaintextpass)
     {
+        byte[] encryptedPass;
+
         using (var aes = Aes.Create())
         {
             aes.Key = key;
             aes.GenerateIV();
 
-            byte[] encryptedPass;
-            using (var encryptor = aes.CreateEncryptor())
+            var encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
+
             using (var ms = new MemoryStream())
-            using (var cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
-            using (var sw = new StreamWriter(cs))
             {
-                sw.Write(plaintextpass);
-                encryptedPass = ms.ToArray();
+                using (var cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
+                {
+                    using (var sw = new StreamWriter(cs))
+                    {
+                        sw.Write(plaintextpass);
+                    }
+                    encryptedPass = ms.ToArray();
+                }
             }
             newItem.EncryptedPassword = encryptedPass;
             newItem.IV = aes.IV;
         }
         _vaultService.SaveItem(newItem);
     }
-    
 
     public bool AuthenticateLogin(UserModel user, string providedPassword)
     {

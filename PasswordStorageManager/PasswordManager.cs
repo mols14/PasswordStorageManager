@@ -83,7 +83,7 @@ public class PasswordManager
                 var user = _authService.PasswordHasher(username!, mPassword!);
                 _userService.CreateUser(user);
                 Thread.Sleep(6000);
-                Login();
+                Menu();
             }
             else
             {
